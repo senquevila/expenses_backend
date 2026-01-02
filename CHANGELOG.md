@@ -1,4 +1,10 @@
 # Changelog
+## 2025-12-15
+### New
+- Add DEFAULT_EXPENSE_ACCOUNT and DEFAULT_INCOME_ACCOUNT in the settings.
+### Change
+- Update the upload process to identify start and end dates from the entire file.
+- Fix flake8 configurations.
 ## 2025-05-04
 ### New
 - Add INVALID_ACCOUNT in the settings.
