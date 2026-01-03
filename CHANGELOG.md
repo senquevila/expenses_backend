@@ -1,4 +1,7 @@
 # Changelog
+## 2026-01-02
+### Change
+- Rename the project.
 ## 2025-12-15
 ### New
 - Add DEFAULT_EXPENSE_ACCOUNT and DEFAULT_INCOME_ACCOUNT in the settings.
