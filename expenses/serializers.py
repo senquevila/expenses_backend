@@ -4,7 +4,9 @@ from expenses.models import (
     Account,
     AccountAsociation,
     CurrencyConvert,
+    Loan,
     Period,
+    Subscription,
     Transaction,
     Upload,
 )
@@ -54,4 +56,16 @@ class TransactionSerializer(serializers.ModelSerializer):
 class UploadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Upload
+        fields = "__all__"
+
+
+class LoanSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Loan
+        fields = "__all__"
+
+
+class SubscriptionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
         fields = "__all__"

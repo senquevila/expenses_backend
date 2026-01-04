@@ -7,11 +7,17 @@ from rest_framework.views import APIView
 from expenses.models import CurrencyConvert
 from expenses.serializers import CurrencyConvertSerializer
 from expenses.utils.tools import create_dollar_conversion
+from rest_framework.decorators import action
 
 
 class CurrencyConvertViewSet(viewsets.ModelViewSet):
     queryset = CurrencyConvert.objects.all()
     serializer_class = CurrencyConvertSerializer
+
+    @action(detail=False, methods=["post"])
+    def create_dollar(self, request, *args, **kwargs):
+        data, _status = create_dollar_conversion()
+        return Response(data, status=_status)
 
 
 class CreateDollarConversionView(APIView):

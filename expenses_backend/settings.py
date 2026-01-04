@@ -1,3 +1,9 @@
+# Django REST Framework global pagination
+DEFAULT_PAGINATION = 20
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': DEFAULT_PAGINATION,
+}
 """
 Django settings for expenses_backend project.
 
@@ -153,7 +159,6 @@ DEFAULT_INCOME_ACCOUNT = "__Ingreso__"
 INVALID_ACCOUNT = "__Invalido__"
 DEFAULT_DATE_FORMAT = "%d/%m/%y"
 CURRENCY_CONVERT_DAYS_RANGE = 90
-DEFAULT_PAGINATION = 10
 
 INTERNAL_IPS = [
     "127.0.0.1",

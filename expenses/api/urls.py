@@ -8,11 +8,15 @@ from rest_framework.routers import DefaultRouter
 from expenses import api as api_views
 
 router = DefaultRouter()
-router.register(r"expenses", api_views.TransactionViewSet, basename="expenses")
-router.register(r"accounts", api_views.AccountViewSet, basename="accounts")
+router.register(r"periods", api_views.PeriodViewSet, basename="api-periods")
+router.register(r"transactions", api_views.TransactionViewSet, basename="api-expenses")
+router.register(r"accounts", api_views.AccountViewSet, basename="api-accounts")
 router.register(
-    r"currency_converts", api_views.CurrencyConvertViewSet, basename="currency_converts"
+    r"currency_converts", api_views.CurrencyConvertViewSet, basename="api-currency_converts"
 )
+router.register(r"loans", api_views.LoanViewSet, basename="api-loans")
+router.register(r"subscriptions", api_views.SubscriptionViewSet, basename="api-subscriptions")
+router.register(r"uploads", api_views.UploadViewSet, basename="api-uploads")
 
 urlpatterns = [
     path("", include(router.urls)),
@@ -26,15 +30,5 @@ urlpatterns = [
         "account_assoc/",
         api_views.AccountAssociationView.as_view(),
         name="account-assoc",
-    ),
-    path(
-        "upload_file_cleanup/",
-        api_views.TransactionUploadFileCleanupView.as_view(),
-        name="upload-file-cleanup",
-    ),
-    path(
-        "invalid_cleanup/",
-        api_views.TransactionDeleteInvalidView.as_view(),
-        name="expense-invalid-account-cleanup",
     ),
 ]
