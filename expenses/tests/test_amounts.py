@@ -1,80 +1,56 @@
-import pytest
+from django.test import TestCase
 
 from expenses.models import Currency
 from expenses.utils.uploads import get_amount
 
 
-@pytest.fixture
-def default_currency(db):
-    return Currency.objects.create(alpha3="HNL", name="Lempira")
+class TestGetAmount(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.hnl = Currency.objects.create(alpha3="HNL", name="Lempira")
+        Currency.objects.create(alpha3="USD", name="Dollars")
 
+    def test_plain_number_uses_default_currency(self):
+        amount, currency = get_amount(["100"], 0, self.hnl)
+        self.assertEqual(amount, 100.0)
+        self.assertEqual(currency.alpha3, "HNL")
 
-@pytest.fixture
-def setup_currencies(db):
-    Currency.objects.create(alpha3="USD", name="Dollars")
+    def test_hnl_prefix_uses_hnl_currency(self):
+        amount, currency = get_amount(["HNL 100"], 0, self.hnl)
+        self.assertEqual(amount, 100.0)
+        self.assertEqual(currency.alpha3, "HNL")
 
+    def test_hnl_suffix_uses_hnl_currency(self):
+        amount, currency = get_amount(["100 HNL"], 0, self.hnl)
+        self.assertEqual(amount, 100.0)
+        self.assertEqual(currency.alpha3, "HNL")
 
-@pytest.mark.django_db
-def test_get_amount_default_currency(default_currency, setup_currencies):
-    row = ["100"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == 100.0
-    assert currency.alpha3 == "HNL"
+    def test_usd_prefix(self):
+        amount, currency = get_amount(["USD 100"], 0, self.hnl)
+        self.assertEqual(amount, 100.0)
+        self.assertEqual(currency.alpha3, "USD")
 
-    row = ["HNL 100"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == 100.0
-    assert currency.alpha3 == "HNL"
+    def test_usd_suffix(self):
+        amount, currency = get_amount(["100 USD"], 0, self.hnl)
+        self.assertEqual(amount, 100.0)
+        self.assertEqual(currency.alpha3, "USD")
 
-    row = ["100 HNL"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == 100.0
-    assert currency.alpha3 == "HNL"
+    def test_invalid_index_returns_none(self):
+        amount, currency = get_amount(["100 ABC"], -1, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
 
+    def test_empty_row_returns_none(self):
+        amount, currency = get_amount([], 0, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
 
-@pytest.mark.django_db
-def test_get_amount_default_currency_usd_preffix(default_currency, setup_currencies):
-    row = ["USD 100"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == 100.0
-    assert currency.alpha3 == "USD"
+    def test_empty_string_returns_none(self):
+        amount, currency = get_amount([""], 0, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
 
-
-@pytest.mark.django_db
-def test_get_amount_default_currency_usd_suffix(default_currency, setup_currencies):
-    row = ["100 USD"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == 100.0
-    assert currency.alpha3 == "USD"
-
-
-@pytest.mark.django_db
-def test_get_amount_default_currency_invalid_index(default_currency, setup_currencies):
-    row = ["100 ABC"]
-    amount, currency = get_amount(row, -1, default_currency)
-    assert amount is None
-    assert currency is None
-
-
-@pytest.mark.django_db
-def test_get_amount_default_currency_none(default_currency, setup_currencies):
-    row = []
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount is None
-    assert currency is None
-
-
-@pytest.mark.django_db
-def test_get_amount_default_currency_empty(default_currency, setup_currencies):
-    row = [""]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount is None
-    assert currency is None
-
-
-@pytest.mark.django_db
-def test_get_amount_default_currency_negative(default_currency, setup_currencies):
-    row = ["USD -1.99"]
-    amount, currency = get_amount(row, 0, default_currency)
-    assert amount == -1.99
-    assert currency.alpha3 == "USD"
+    def test_negative_usd_amount(self):
+        amount, currency = get_amount(["USD -1.99"], 0, self.hnl)
+        self.assertEqual(amount, -1.99)
+        self.assertEqual(currency.alpha3, "USD")

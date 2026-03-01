@@ -17,7 +17,7 @@ from expenses.serializers import (
 
 
 class PeriodViewSet(viewsets.ModelViewSet):
-    queryset = Period.objects.all()
+    queryset = Period.objects.all().order_by("-year", "-month")
     serializer_class = PeriodSerializer
 
 

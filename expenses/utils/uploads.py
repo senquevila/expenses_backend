@@ -325,8 +325,8 @@ def get_transaction_money_credit_card(row, indexes, default_currency):
         get_amount_currency(row, indexes["amount_currency"], default_currency),
     ]
 
-    # Filter out None values
-    valid_amounts = [(amount, currency) for amount, currency in amounts if amount is not None or amount != 0]
+    # Filter out None and zero values
+    valid_amounts = [(amount, currency) for amount, currency in amounts if amount is not None and amount != 0]
 
     if valid_amounts:
         # Return the tuple with the non-zero amount
