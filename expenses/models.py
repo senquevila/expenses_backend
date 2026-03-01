@@ -148,9 +148,20 @@ class Upload(CreationModificationDateMixin):
         return str(self.file.name)
 
 
-class UploadData(models.Model):
-    upload = models.ForeignKey(Upload, on_delete=models.CASCADE)
-    json = models.JSONField()
+class UploadFile(CreationModificationDateMixin):
+    class UploadFileStatus(models.TextChoices):
+        PENDING = "PENDING", _("Pendiente")
+        PROCESSING = "PROCESSING", _("Procesando")
+        ERROR = "ERROR", _("Error")
+        FINISHED = "FINISHED", _("Terminado")
+
+    input_file = models.FileField(_("Archivo CSV"), blank=True, null=True, upload_to=expense_upload_path)
+    output_file = models.FileField(_("Archivo JSON"), blank=True, null=True, upload_to=expense_upload_path)
+    start_date = models.DateField(_("Fecha de inicio"), default=timezone.now, blank=True, null=True)
+    end_date = models.DateField(_("Fecha de fin"), default=timezone.now, blank=True, null=True)
+    status_upload = models.CharField(
+        _("Estado del proceso"), max_length=20, choices=UploadFileStatus.choices, default=UploadFileStatus.PENDING
+    )
 
 
 class Transaction(Accountable):
@@ -160,6 +171,12 @@ class Transaction(Accountable):
     identifier = models.CharField(max_length=64, blank=True, null=True)
     upload = models.ForeignKey(
         Upload,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+    )
+    upload_file = models.ForeignKey(
+        UploadFile,
         blank=True,
         null=True,
         on_delete=models.CASCADE,
