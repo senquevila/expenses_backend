@@ -31,7 +31,7 @@ class UploadListView(ListView):
         return uploads
 
 
-class UploadView(FormView):
+class UploadAddView(FormView):
     template_name = "expenses/upload_add.html"
     form_class = UploadForm
 

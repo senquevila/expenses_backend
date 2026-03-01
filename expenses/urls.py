@@ -49,7 +49,7 @@ urlpatterns = [
     ),
     path(
         "upload/add/",
-        views.UploadView.as_view(),
+        views.UploadAddView.as_view(),
         name="upload-add",
     ),
     path(
