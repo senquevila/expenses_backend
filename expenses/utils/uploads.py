@@ -147,6 +147,7 @@ def process_account_csv(upload: Upload, currency: Currency):
     # get the upload metadata
     row_range = upload.parameters["rows"]
     indexes = get_field_indexes_account(upload.parameters["cols"])
+    upload_currency = currency  # preserve to avoid rebinding inside the loop
 
     for row in upload.data[row_range["start"] : row_range["end"] + 1]:
         row = [str(item).strip() for item in row]
@@ -190,7 +191,7 @@ def process_account_csv(upload: Upload, currency: Currency):
             continue
 
         # get the amount and local currency
-        amount, currency = get_transaction_money_account(row, indexes, currency, defaults["currency"])
+        amount, currency, is_credit = get_transaction_money_account(row, indexes, upload_currency, defaults["currency"])
 
         if not amount:
             message["description"] = "Amount zero"
@@ -211,12 +212,14 @@ def process_account_csv(upload: Upload, currency: Currency):
             set_message(**message)
             continue
 
+        account = defaults["income_account"] if is_credit else defaults["expense_account"]
+
         serializer = TransactionSerializer(
             data={
                 "payment_date": payment_date,
                 "description": description,
                 "period": period.pk,
-                "account": defaults["expense_account"].pk,
+                "account": account.pk,
                 "currency": currency.pk,
                 "amount": amount,
                 "upload": upload.pk,
@@ -347,14 +350,19 @@ def get_transaction_money_account(row, indexes, currency, default_currency):
             get_amount_currency(row, indexes["amount_credit"], currency),
         ]
 
-    # Filter out None values and calculate absolute values
-    valid_amounts = [(abs(amount), currency) for amount, currency in amounts if amount is not None]
+    # Tag each amount with its source index (0=debit, 1=credit), apply abs
+    tagged = [
+        (abs(amount), currency, idx)
+        for idx, (amount, currency) in enumerate(amounts)
+        if amount is not None
+    ]
 
-    if valid_amounts:
-        # Return the tuple with the maximum amount
-        return max(valid_amounts, key=lambda x: x[0])
+    if tagged:
+        best = max(tagged, key=lambda x: x[0])
+        is_credit = best[2] == 1
+        return best[0], best[1], is_credit
     else:
-        return None, None
+        return None, None, None
 
 
 def set_message(data: dict, line_number: int, source: str, description: str):

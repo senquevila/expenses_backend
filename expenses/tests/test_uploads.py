@@ -264,33 +264,44 @@ class TestGetTransactionMoneyCreditCard(BaseUploadTestCase):
 class TestGetTransactionMoneyAccount(BaseUploadTestCase):
     def test_debit_amount_with_default_currency(self):
         row = ["1", "2024-01-15", "RENT", "5000.00", ""]
-        amount, currency = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
         self.assertEqual(amount, 5000.0)
         self.assertEqual(currency, self.hnl)
+        self.assertFalse(is_credit)
 
     def test_credit_amount_with_default_currency(self):
         row = ["1", "2024-01-15", "SALARY", "", "10000.00"]
-        amount, currency = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
         self.assertEqual(amount, 10000.0)
         self.assertEqual(currency, self.hnl)
+        self.assertTrue(is_credit)
 
     def test_returns_max_when_both_present(self):
         row = ["1", "2024-01-15", "ENTRY", "200.00", "500.00"]
-        amount, currency = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
         self.assertEqual(amount, 500.0)
         self.assertEqual(currency, self.hnl)
+        self.assertTrue(is_credit)
+
+    def test_debit_wins_when_both_present_and_larger(self):
+        row = ["1", "2024-01-15", "ENTRY", "800.00", "500.00"]
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
+        self.assertEqual(amount, 800.0)
+        self.assertFalse(is_credit)
 
     def test_non_default_currency_uses_get_amount_currency(self):
         row = ["1", "2024-01-15", "AMAZON", "50.00", ""]
-        amount, currency = get_transaction_money_account(row, ACCOUNT_INDEXES, self.usd, self.hnl)
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.usd, self.hnl)
         self.assertEqual(amount, 50.0)
         self.assertEqual(currency, self.usd)
+        self.assertFalse(is_credit)
 
     def test_both_empty_returns_none(self):
         row = ["1", "2024-01-15", "EMPTY", "", ""]
-        amount, currency = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
+        amount, currency, is_credit = get_transaction_money_account(row, ACCOUNT_INDEXES, self.hnl, self.hnl)
         self.assertIsNone(amount)
         self.assertIsNone(currency)
+        self.assertIsNone(is_credit)
 
 
 # ===========================================================================
@@ -583,3 +594,43 @@ class TestProcessAccountCsv(BaseUploadTestCase):
 
         self.assertEqual(Transaction.objects.count(), 1)
         self.assertEqual(Transaction.objects.first().currency, self.usd)
+
+    def test_debit_amount_uses_expense_account(self):
+        data = [["1", "2024-01-15", "RENT", "5000.00", ""]]
+        upload = make_account_upload(data)
+
+        process_account_csv(upload, self.hnl)
+
+        self.assertEqual(Transaction.objects.first().account, self.expense_account)
+
+    def test_credit_amount_uses_income_account(self):
+        # Real-world case: debit=0.00, credit=2187.00 — should be income
+        data = [["13", "2024-01-15", "SALARY", "0.00", "2187.00"]]
+        upload = make_account_upload(data)
+
+        process_account_csv(upload, self.hnl)
+
+        t = Transaction.objects.first()
+        self.assertEqual(t.account, self.income_account)
+        self.assertEqual(float(t.amount), 2187.0)
+
+    def test_usd_credit_amount_uses_income_account(self):
+        # Mirrors the reported row: debit='USD 0.00', credit='USD 2187.00'
+        ACCOUNT_COLS_USD = [
+            {"payment_date": 1},
+            {"description": 4},
+            {"amount_debit": 5},
+            {"amount_credit": 6},
+        ]
+        data = [["13", "2024-01-15", "566379", "WC", "BAX BIBLIOTECA ACAD", "USD 0.00", "USD 2187.00", "3079.66"]]
+        upload = Upload.objects.create(
+            data=data,
+            parameters={"rows": {"start": 0, "end": 0}, "cols": ACCOUNT_COLS_USD},
+        )
+
+        process_account_csv(upload, self.usd)
+
+        t = Transaction.objects.first()
+        self.assertEqual(t.account, self.income_account)
+        self.assertEqual(float(t.amount), 2187.0)
+        self.assertEqual(t.currency, self.usd)
