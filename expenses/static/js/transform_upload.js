@@ -136,7 +136,7 @@ function repaint_column() {
     repaint_row();
 }
 
-function initialize_page(data, load_form_data, save_form_data, normalize_data) {
+function initialize_page(data, load_form_data, save_form_data, normalize_data, dimension) {
     load_form_data();
 
     if (data.length > 0) {
@@ -161,9 +161,9 @@ function initialize_page(data, load_form_data, save_form_data, normalize_data) {
         });
     }
 
-    const { num_row, num_col } = get_range_object(data);
-
-    $("#id_end_row").val(num_row);
+    const rawRange = get_range_object(data);
+    const num_row = isNaN(rawRange.num_row) ? dimension.rows : rawRange.num_row;
+    const num_col = isNaN(rawRange.num_col) ? dimension.cols : rawRange.num_col;
 
     $(".repaint-col-trigger").on("change", function () {
         console.log("Repainting columns...");

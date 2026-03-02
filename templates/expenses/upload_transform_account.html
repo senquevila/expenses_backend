@@ -151,7 +151,7 @@ Upload Transform
     const data_dimension = {{ dimension| safe }};
 
     document.addEventListener('DOMContentLoaded', () => {
-      run(data);
+      run(data, data_dimension);
     });
 </script>
 {% endblock %}

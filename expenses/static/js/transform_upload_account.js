@@ -23,8 +23,8 @@ function load_form_data() {
     }
 }
 
-function run(data) {
-    initialize_page(data, load_form_data, save_form_data, normalize_data);
+function run(data, dimension) {
+    initialize_page(data, load_form_data, save_form_data, normalize_data, dimension);
 }
 
 export { run };
