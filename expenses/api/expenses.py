@@ -20,10 +20,26 @@ class PeriodViewSet(viewsets.ModelViewSet):
     queryset = Period.objects.all().order_by("-year", "-month")
     serializer_class = PeriodSerializer
 
+    @action(detail=True, methods=["post"])
+    def toggle_active(self, request, pk=None):
+        period = self.get_object()
+        period.is_active = not period.is_active
+        period.save()
+        return Response({"status": "success", "is_active": period.is_active}, status=status.HTTP_200_OK)
+
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        transaction = self.get_object()
+        if transaction.period.closed:
+            return Response(
+                {"detail": "The selected period is closed and cannot be modified."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
 
     @action(detail=False, methods=["delete"])
     def remove_invalid_expenses(self, request, *args, **kwargs):

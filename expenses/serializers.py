@@ -52,6 +52,11 @@ class TransactionSerializer(serializers.ModelSerializer):
         model = Transaction
         fields = "__all__"
 
+    def validate_period(self, period):
+        if period.closed:
+            raise serializers.ValidationError("The selected period is closed and cannot be modified.")
+        return period
+
 
 class UploadSerializer(serializers.ModelSerializer):
     class Meta:
