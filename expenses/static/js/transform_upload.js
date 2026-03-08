@@ -44,10 +44,10 @@ function get_range_object(data) {
 }
 
 function set_input_range(num_row, num_col) {
-    const min_col = -1;
-    const max_col = num_col - 1;
+    const min_col = 0;
+    const max_col = num_col;
     const min_row = 0;
-    const max_row = num_row - 2;
+    const max_row = num_row;
 
     columns.forEach(function (column) {
         $("#" + column.id).attr({
@@ -136,7 +136,7 @@ function repaint_column() {
     repaint_row();
 }
 
-function initialize_page(data, load_form_data, save_form_data, normalize_data, dimension) {
+function initialize_page(data, load_form_data, save_form_data, normalize_data) {
     load_form_data();
 
     if (data.length > 0) {
@@ -161,9 +161,9 @@ function initialize_page(data, load_form_data, save_form_data, normalize_data, d
         });
     }
 
-    const rawRange = get_range_object(data);
-    const num_row = isNaN(rawRange.num_row) ? dimension.rows : rawRange.num_row;
-    const num_col = isNaN(rawRange.num_col) ? dimension.cols : rawRange.num_col;
+    const { num_row, num_col } = get_range_object(data);
+
+    $("#id_end_row").val(num_row);
 
     $(".repaint-col-trigger").on("change", function () {
         console.log("Repainting columns...");
