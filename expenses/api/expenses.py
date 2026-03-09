@@ -17,15 +17,15 @@ from expenses.serializers import (
 
 
 class PeriodViewSet(viewsets.ModelViewSet):
-    queryset = Period.objects.all().order_by("-year", "-month")
+    queryset = Period.objects.filter(active=True).order_by("-year", "-month")
     serializer_class = PeriodSerializer
 
-    @action(detail=True, methods=["post"])
-    def toggle_active(self, request, pk=None):
+    @action(detail=True, methods=["post"], url_path="toggle")
+    def toggle(self, request, pk=None):
         period = self.get_object()
-        period.is_active = not period.is_active
-        period.save()
-        return Response({"status": "success", "is_active": period.is_active}, status=status.HTTP_200_OK)
+        period.closed = not period.closed
+        period.save(update_fields=["closed"])
+        return Response({"status": "success", "closed": period.closed}, status=status.HTTP_200_OK)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
