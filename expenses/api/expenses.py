@@ -6,26 +6,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 # models import
-from expenses.models import Loan, Period, Subscription, Transaction, Upload
+from expenses.models import Loan, Subscription, Transaction, Upload
 from expenses.serializers import (
     LoanSerializer,
-    PeriodSerializer,
     SubscriptionSerializer,
     TransactionSerializer,
     UploadSerializer,
 )
-
-
-class PeriodViewSet(viewsets.ModelViewSet):
-    queryset = Period.objects.filter(active=True).order_by("-year", "-month")
-    serializer_class = PeriodSerializer
-
-    @action(detail=True, methods=["post"], url_path="toggle")
-    def toggle(self, request, pk=None):
-        period = self.get_object()
-        period.closed = not period.closed
-        period.save(update_fields=["closed"])
-        return Response({"status": "success", "closed": period.closed}, status=status.HTTP_200_OK)
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
@@ -49,6 +36,16 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return Response(data={"transaction-removed": deletes}, status=status.HTTP_200_OK)
 
 
+class LoanViewSet(viewsets.ModelViewSet):
+    queryset = Loan.objects.filter(is_active=True)
+    serializer_class = LoanSerializer
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    queryset = Subscription.objects.filter(is_active=True)
+    serializer_class = SubscriptionSerializer
+
+
 class UploadViewSet(viewsets.ModelViewSet):
     queryset = Upload.objects.all()
     serializer_class = UploadSerializer
@@ -59,13 +56,3 @@ class UploadViewSet(viewsets.ModelViewSet):
         deletes = unused_uploads.count()
         unused_uploads.delete()
         return Response(data={"files-removed": deletes}, status=status.HTTP_200_OK)
-
-
-class LoanViewSet(viewsets.ModelViewSet):
-    queryset = Loan.objects.filter(is_active=True)
-    serializer_class = LoanSerializer
-
-
-class SubscriptionViewSet(viewsets.ModelViewSet):
-    queryset = Subscription.objects.filter(is_active=True)
-    serializer_class = SubscriptionSerializer
