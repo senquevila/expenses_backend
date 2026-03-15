@@ -31,8 +31,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["delete"])
     def remove_invalid_expenses(self, request, *args, **kwargs):
         invalid_expenses = Transaction.objects.filter(account__name=settings.INVALID_ACCOUNT)
-        deletes = invalid_expenses.count()
-        invalid_expenses.delete()
+        deletes, _ = invalid_expenses.delete()
         return Response(data={"transaction-removed": deletes}, status=status.HTTP_200_OK)
 
 
@@ -53,6 +52,5 @@ class UploadViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["delete"])
     def remove_unused_uploads(self, request, *args, **kwargs):
         unused_uploads = Upload.objects.annotate(num_expenses=Count("expense")).filter(num_expenses=0)
-        deletes = unused_uploads.count()
-        unused_uploads.delete()
+        deletes, _ = unused_uploads.delete()
         return Response(data={"files-removed": deletes}, status=status.HTTP_200_OK)
