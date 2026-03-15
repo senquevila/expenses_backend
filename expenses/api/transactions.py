@@ -10,14 +10,19 @@ from expenses.models import Loan, Subscription, Transaction, Upload
 from expenses.serializers import (
     LoanSerializer,
     SubscriptionSerializer,
-    TransactionSerializer,
+    TransactionReadSerializer,
+    TransactionWriteSerializer,
     UploadSerializer,
 )
 
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return TransactionReadSerializer
+        return TransactionWriteSerializer
 
     def destroy(self, request, *args, **kwargs):
         transaction = self.get_object()

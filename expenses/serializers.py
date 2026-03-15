@@ -43,19 +43,36 @@ class PeriodSerializer(serializers.ModelSerializer):
         ordering = ["-year", "-month"]
 
 
-class TransactionSerializer(serializers.ModelSerializer):
+class TransactionReadSerializer(serializers.ModelSerializer):
     """
-    Serializer for the Transaction model.
+    Read serializer for Transaction — expands all related objects.
     """
+
+    period = PeriodSerializer(read_only=True)
+    account = AccountSerializer(read_only=True)
 
     class Meta:
         model = Transaction
         fields = "__all__"
 
+
+class TransactionWriteSerializer(serializers.ModelSerializer):
+    """
+    Write serializer for Transaction — accepts FK ids only.
+    """
+
+    class Meta:
+        model = Transaction
+        fields = ["id", "period", "account", "currency", "amount", "description", "payment_date", "identifier", "upload"]
+
     def validate_period(self, period):
         if period.closed:
             raise serializers.ValidationError("The selected period is closed and cannot be modified.")
         return period
+
+
+# Keep backward-compatible alias
+TransactionSerializer = TransactionWriteSerializer
 
 
 class UploadSerializer(serializers.ModelSerializer):

@@ -1,4 +1,8 @@
 # Changelog
+## 2026-03-15
+### Change
+- Adjust api endpoints, restructuring file organization and renaming some endpoints for better clarity.
+- Change serializer for transaction to include associated elements like account, period.
 ## 2026-01-02
 ### Change
 - Rename the project.
