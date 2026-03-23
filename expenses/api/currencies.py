@@ -5,9 +5,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 # models import
-from expenses.models import CurrencyConvert
-from expenses.serializers import CurrencyConvertSerializer
+from expenses.models import Currency, CurrencyConvert
+from expenses.serializers import CurrencySerializer, CurrencyConvertSerializer
 from expenses.utils.tools import create_dollar_conversion
+
+
+class CurrencyViewSet(viewsets.ModelViewSet):
+    queryset = Currency.objects.all()
+    serializer_class = CurrencySerializer
 
 
 class CurrencyConvertViewSet(viewsets.ModelViewSet):

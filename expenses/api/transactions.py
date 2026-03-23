@@ -8,8 +8,10 @@ from rest_framework.response import Response
 # models import
 from expenses.models import Loan, Subscription, Transaction, Upload
 from expenses.serializers import (
-    LoanSerializer,
-    SubscriptionSerializer,
+    LoanReaderSerializer,
+    LoanWriterSerializer,
+    SubscriptionReaderSerializer,
+    SubscriptionWriteSerializer,
     TransactionReadSerializer,
     TransactionWriteSerializer,
     UploadSerializer,
@@ -42,13 +44,20 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.filter(is_active=True)
-    serializer_class = LoanSerializer
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return LoanReaderSerializer
+        return LoanWriterSerializer
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
     queryset = Subscription.objects.filter(is_active=True)
-    serializer_class = SubscriptionSerializer
 
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return SubscriptionReaderSerializer
+        return SubscriptionWriteSerializer
 
 class UploadViewSet(viewsets.ModelViewSet):
     queryset = Upload.objects.all()

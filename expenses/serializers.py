@@ -4,6 +4,7 @@ from rest_framework import serializers
 from expenses.models import (
     Account,
     AccountAsociation,
+    Currency,
     CurrencyConvert,
     Loan,
     Period,
@@ -25,6 +26,12 @@ class AccountAssociationSerializer(serializers.ModelSerializer):
         model = AccountAsociation
         fields = "__all__"
         ordering = ["account__name"]
+
+
+class CurrencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = "__all__"
 
 
 class CurrencyConvertSerializer(serializers.ModelSerializer):
@@ -57,11 +64,17 @@ class TransactionReadSerializer(serializers.ModelSerializer):
     period = PeriodSerializer(read_only=True)
     account = AccountSerializer(read_only=True)
     local_amount = serializers.SerializerMethodField()
+    amount = serializers.SerializerMethodField()
 
     def get_local_amount(self, obj):
         currency = getattr(obj, "currency", None)
         currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
         return {"value": obj.local_amount, "currency": currency_code}
+
+    def get_amount(self, obj):
+        currency = getattr(obj, "currency", None)
+        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
+        return {"value": obj.amount, "currency": currency_code}
 
     class Meta:
         model = Transaction
@@ -75,7 +88,7 @@ class TransactionWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ["id", "period", "account", "currency", "amount", "description", "payment_date", "identifier", "upload"]
+        fields = ["id", "period", "account", "currency", "amount", "local_amount", "description", "payment_date", "identifier", "upload"]
 
     def validate_period(self, period):
         if period.closed:
@@ -93,13 +106,57 @@ class UploadSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LoanSerializer(serializers.ModelSerializer):
+class LoanReaderSerializer(serializers.ModelSerializer):
+    amount = serializers.SerializerMethodField()
+    monthly_payment = serializers.SerializerMethodField()
+    percentage = serializers.SerializerMethodField()
+    end_date = serializers.SerializerMethodField()
+
+    def get_amount(self, obj):
+        currency = getattr(obj, "currency", None)
+        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
+        return {"value": obj.amount, "currency": currency_code}
+
+    def get_monthly_payment(self, obj):
+        currency = getattr(obj, "currency", None)
+        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
+        return {"value": obj.monthly_payment, "currency": currency_code}
+
+    def get_percentage(self, obj):
+        return obj.percentage
+    
+    def get_end_date(self, obj):
+        return obj.end_date.isoformat() if obj.end_date else None
+
     class Meta:
         model = Loan
         fields = "__all__"
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
+class LoanWriterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Loan
+        fields = "__all__"
+
+
+class SubscriptionReaderSerializer(serializers.ModelSerializer):
+    monthly_payment = serializers.SerializerMethodField()
+
+    def get_monthly_payment(self, obj):
+        currency = getattr(obj, "currency", None)
+        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
+        return {"value": obj.monthly_payment, "currency": currency_code}
+
     class Meta:
         model = Subscription
         fields = "__all__"
+
+
+class SubscriptionWriterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = "__all__"
+
+
+# Keep backward-compatible alias
+SubscriptionWriteSerializer = SubscriptionWriterSerializer
