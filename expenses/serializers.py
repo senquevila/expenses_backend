@@ -56,12 +56,12 @@ class TransactionReadSerializer(serializers.ModelSerializer):
 
     period = PeriodSerializer(read_only=True)
     account = AccountSerializer(read_only=True)
-    amount = serializers.SerializerMethodField()
+    local_amount = serializers.SerializerMethodField()
 
-    def get_amount(self, obj):
+    def get_local_amount(self, obj):
         currency = getattr(obj, "currency", None)
         currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.amount, "currency": currency_code}
+        return {"value": obj.local_amount, "currency": currency_code}
 
     class Meta:
         model = Transaction
