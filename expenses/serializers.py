@@ -14,6 +14,12 @@ from expenses.models import (
 )
 
 
+class CurrencyMixin:
+    def get_currency_code(self, obj):
+        currency = getattr(obj, "currency", None)
+        return currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
+
+
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
@@ -56,7 +62,7 @@ class PeriodSerializer(serializers.ModelSerializer):
         ordering = ["-year", "-month"]
 
 
-class TransactionReadSerializer(serializers.ModelSerializer):
+class TransactionReadSerializer(CurrencyMixin, serializers.ModelSerializer):
     """
     Read serializer for Transaction — expands all related objects.
     """
@@ -67,14 +73,10 @@ class TransactionReadSerializer(serializers.ModelSerializer):
     amount = serializers.SerializerMethodField()
 
     def get_local_amount(self, obj):
-        currency = getattr(obj, "currency", None)
-        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.local_amount, "currency": currency_code}
+        return {"value": obj.local_amount, "currency": self.get_currency_code(obj)}
 
     def get_amount(self, obj):
-        currency = getattr(obj, "currency", None)
-        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.amount, "currency": currency_code}
+        return {"value": obj.amount, "currency": self.get_currency_code(obj)}
 
     class Meta:
         model = Transaction
@@ -106,21 +108,17 @@ class UploadSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class LoanReaderSerializer(serializers.ModelSerializer):
+class LoanReaderSerializer(CurrencyMixin, serializers.ModelSerializer):
     amount = serializers.SerializerMethodField()
     monthly_payment = serializers.SerializerMethodField()
     percentage = serializers.SerializerMethodField()
     end_date = serializers.SerializerMethodField()
 
     def get_amount(self, obj):
-        currency = getattr(obj, "currency", None)
-        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.amount, "currency": currency_code}
+        return {"value": obj.amount, "currency": self.get_currency_code(obj)}
 
     def get_monthly_payment(self, obj):
-        currency = getattr(obj, "currency", None)
-        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.monthly_payment, "currency": currency_code}
+        return {"value": obj.monthly_payment, "currency": self.get_currency_code(obj)}
 
     def get_percentage(self, obj):
         return obj.percentage
@@ -139,13 +137,11 @@ class LoanWriterSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class SubscriptionReaderSerializer(serializers.ModelSerializer):
+class SubscriptionReaderSerializer(CurrencyMixin, serializers.ModelSerializer):
     monthly_payment = serializers.SerializerMethodField()
 
     def get_monthly_payment(self, obj):
-        currency = getattr(obj, "currency", None)
-        currency_code = currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
-        return {"value": obj.monthly_payment, "currency": currency_code}
+        return {"value": obj.monthly_payment, "currency": self.get_currency_code(obj)}
 
     class Meta:
         model = Subscription
