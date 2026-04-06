@@ -20,11 +20,31 @@ class CurrencyMixin:
         return currency.alpha3 if currency is not None else settings.DEFAULT_CURRENCY
 
 
-class AccountSerializer(serializers.ModelSerializer):
+class AccountFlatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        exclude = ["parent"]
+        ordering = ["account_type", "name"]
+
+
+class AccountReadSerializer(serializers.ModelSerializer):
+    parent = AccountFlatSerializer(read_only=True)
+
     class Meta:
         model = Account
         fields = "__all__"
         ordering = ["account_type", "name"]
+
+
+class AccountWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = "__all__"
+        ordering = ["account_type", "name"]
+
+
+# Keep backward-compatible alias
+AccountSerializer = AccountWriteSerializer
 
 
 class AccountAssociationSerializer(serializers.ModelSerializer):
@@ -68,7 +88,7 @@ class TransactionReadSerializer(CurrencyMixin, serializers.ModelSerializer):
     """
 
     period = PeriodSerializer(read_only=True)
-    account = AccountSerializer(read_only=True)
+    account = AccountReadSerializer(read_only=True)
     local_amount = serializers.SerializerMethodField()
     amount = serializers.SerializerMethodField()
 
