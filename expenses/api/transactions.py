@@ -7,6 +7,7 @@ from django.db.models import Count
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 # models import
@@ -24,6 +25,9 @@ from expenses.serializers import (
 
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["payment_date", "amount", "local_amount"]
+    ordering = ["-payment_date", "-local_amount"]
 
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):
@@ -48,6 +52,9 @@ class TransactionViewSet(viewsets.ModelViewSet):
 
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["start_date", "end_date", "amount", "monthly_payment"]
+    ordering = ["-amount"]
 
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):
@@ -101,6 +108,9 @@ class LoanViewSet(viewsets.ModelViewSet):
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
     queryset = Subscription.objects.all()
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["name", "monthly_payment"]
+    ordering = ["-monthly_payment"]
 
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):
@@ -137,6 +147,9 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
 class UploadViewSet(viewsets.ModelViewSet):
     queryset = Upload.objects.all()
     serializer_class = UploadSerializer
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["end_date", "start_date"]
+    ordering = ["-end_date"]
 
     @action(detail=False, methods=["delete"])
     def remove_unused_uploads(self, request, *args, **kwargs):
