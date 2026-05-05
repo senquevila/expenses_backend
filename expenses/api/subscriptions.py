@@ -2,6 +2,7 @@
 from decimal import Decimal
 
 from django.conf import settings
+from django.db.models import F
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
@@ -42,8 +43,8 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="toggle")
     def toggle_active(self, request, *args, **kwargs):
         subscription = self.get_object()
-        subscription.is_active = not subscription.is_active
-        subscription.save()
+        Subscription.objects.filter(pk=subscription.pk).update(is_active=~F("is_active"))
+        subscription.refresh_from_db(fields=["is_active"])
         return Response({"status": "success", "is_active": subscription.is_active})
 
     @action(detail=False, methods=["get"], url_path="summary")

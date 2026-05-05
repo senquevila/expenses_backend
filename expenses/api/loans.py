@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.db.models import F
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -44,8 +45,8 @@ class LoanViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"], url_path="toggle")
     def toggle_active(self, request, *args, **kwargs):
         loan = self.get_object()
-        loan.is_active = not loan.is_active
-        loan.save()
+        Loan.objects.filter(pk=loan.pk).update(is_active=~F("is_active"))
+        loan.refresh_from_db(fields=["is_active"])
         return Response({"status": "success", "is_active": loan.is_active})
 
     @action(detail=False, methods=["get"], url_path="summary")
