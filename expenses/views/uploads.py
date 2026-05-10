@@ -1,6 +1,4 @@
-import csv
 import json
-from io import StringIO
 from typing import Any
 
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -27,7 +25,6 @@ class UploadListView(ListView):
         uploads = Upload.objects.order_by("-id")
         for upload in uploads:
             upload.trx_count = Transaction.objects.filter(upload=upload).count()
-            upload.line_count = upload.parameters["rows"]["end"] - upload.parameters["rows"]["start"]
         return uploads
 
 
@@ -52,33 +49,6 @@ class UploadAddView(FormView):
 
         upload = form.save()
 
-        # create a dictionary with the file rows and columns
-        file.seek(0)
-        decoded_file = file.read().decode("iso-8859-1")
-
-        csv_file = StringIO(decoded_file)
-        reader = csv.reader(csv_file)
-
-        data = []
-        key = 0
-        num_cols = 0
-        # Fill the dictionary with data, using one of the fields (e.g., name) as the key
-        for row in reader:
-            l_row = list(row)
-            l_row.insert(0, key)
-            data.append(l_row)
-            num_cols = max(num_cols, len(l_row))
-            key += 1
-
-        num_rows = key + 1
-
-        upload.dimension = {
-            "rows": num_rows,
-            "cols": num_cols,
-        }
-        upload.data = data
-        upload.save()
-
         if file_type == "credit_card":
             page = "upload-transform-credit-card"
         elif file_type == "account":
@@ -97,8 +67,6 @@ class UploadTransformCreditCardView(FormView):
         context = super().get_context_data(**kwargs)
         upload = Upload.objects.get(pk=self.kwargs.get("pk"))
         context["file"] = upload.file
-        context["rows"] = upload.data
-        context["dimension"] = upload.dimension
         return context
 
     def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
@@ -106,16 +74,6 @@ class UploadTransformCreditCardView(FormView):
         form = self.get_form()
 
         if form.is_valid():
-            upload.parameters["rows"]["start"] = form.cleaned_data["start_row"]
-            upload.parameters["rows"]["end"] = form.cleaned_data["end_row"]
-            upload.parameters["cols"] = [
-                {"payment_date": form.cleaned_data["payment_date"]},
-                {"description": form.cleaned_data["description"]},
-                {"amount": form.cleaned_data["amount"]},
-                {"amount_currency": form.cleaned_data["amount_currency"]},
-            ]
-            upload.save()
-
             # process the csv content
             process_credit_card_csv(upload)
 
@@ -132,8 +90,6 @@ class UploadTransformAccountView(FormView):
         context = super().get_context_data(**kwargs)
         upload = Upload.objects.get(pk=self.kwargs.get("pk"))
         context["file"] = upload.file
-        context["rows"] = upload.data
-        context["dimension"] = upload.dimension
         return context
 
     def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
@@ -141,16 +97,6 @@ class UploadTransformAccountView(FormView):
         form = self.get_form()
 
         if form.is_valid():
-            upload.parameters["rows"]["start"] = form.cleaned_data["start_row"]
-            upload.parameters["rows"]["end"] = form.cleaned_data["end_row"]
-            upload.parameters["cols"] = [
-                {"payment_date": form.cleaned_data["payment_date"]},
-                {"description": form.cleaned_data["description"]},
-                {"amount_debit": form.cleaned_data["amount_debit"]},
-                {"amount_credit": form.cleaned_data["amount_credit"]},
-            ]
-            upload.save()
-
             # process the csv content
             process_account_csv(upload, form.cleaned_data["currency"])
 

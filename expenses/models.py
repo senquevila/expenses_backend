@@ -114,29 +114,9 @@ def expense_upload_path(instance, filename):
     return f"expenses/{now.strftime('%Y/%m')}/{filename}"
 
 
-def upload_dimension_default():
-    return {
-        "rows": 0,
-        "cols": 0,
-    }
-
-
-def upload_parameters_default():
-    return {
-        "rows": {
-            "start": 0,
-            "end": 0,
-        },
-        "cols": [],
-    }
-
-
 class Upload(CreationModificationDateMixin):
     file = models.FileField(_("Archivo"), blank=True, null=True, upload_to=expense_upload_path)
-    data = models.JSONField(_("Datos"), blank=True, null=True)  # obsoleto
-    dimension = models.JSONField(_("Dimension del document"), default=upload_dimension_default)  # obsoleto
     result = models.JSONField(_("Resultado"), blank=True, null=True)
-    parameters = models.JSONField(_("Parámetros"), blank=True, null=True, default=upload_parameters_default)  # obsoleto
     start_date = models.DateField(_("Fecha de inicio"), default=timezone.now, blank=True, null=True)
     end_date = models.DateField(_("Fecha de fin"), default=timezone.now, blank=True, null=True)
     fails = models.JSONField(_("Errores"), blank=True, null=True)

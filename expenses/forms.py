@@ -120,7 +120,7 @@ class UploadTransformForm(forms.ModelForm):
 
     class Meta:
         model = Upload
-        fields = ("parameters",)
+        fields = ()
 
 
 class UploadTransformAccountForm(forms.ModelForm):
@@ -160,7 +160,7 @@ class UploadTransformAccountForm(forms.ModelForm):
 
     class Meta:
         model = Upload
-        fields = ("parameters",)
+        fields = ()
 
 
 class PeriodForm(forms.ModelForm):

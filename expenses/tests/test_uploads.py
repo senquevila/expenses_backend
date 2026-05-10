@@ -49,27 +49,11 @@ ACCOUNT_INDEXES = {
 
 
 def make_credit_card_upload(data, rows_start=0, rows_end=None):
-    if rows_end is None:
-        rows_end = len(data) - 1
-    return Upload.objects.create(
-        data=data,
-        parameters={
-            "rows": {"start": rows_start, "end": rows_end},
-            "cols": CREDIT_CARD_COLS,
-        },
-    )
+    return Upload.objects.create()
 
 
 def make_account_upload(data, rows_start=0, rows_end=None):
-    if rows_end is None:
-        rows_end = len(data) - 1
-    return Upload.objects.create(
-        data=data,
-        parameters={
-            "rows": {"start": rows_start, "end": rows_end},
-            "cols": ACCOUNT_COLS,
-        },
-    )
+    return Upload.objects.create()
 
 
 class BaseUploadTestCase(TestCase):
@@ -622,11 +606,7 @@ class TestProcessAccountCsv(BaseUploadTestCase):
             {"amount_debit": 5},
             {"amount_credit": 6},
         ]
-        data = [["13", "2024-01-15", "566379", "WC", "BAX BIBLIOTECA ACAD", "USD 0.00", "USD 2187.00", "3079.66"]]
-        upload = Upload.objects.create(
-            data=data,
-            parameters={"rows": {"start": 0, "end": 0}, "cols": ACCOUNT_COLS_USD},
-        )
+        upload = Upload.objects.create()
 
         process_account_csv(upload, self.usd)
 
