@@ -2,9 +2,9 @@ import hashlib
 
 from django.conf import settings
 
-from expenses.models import Account, Currency, Period, Transaction, Upload
+from expenses.models import Account, AccountAsociation, Currency, Period, Transaction, Upload
 from expenses.serializers import TransactionSerializer
-from expenses.utils.tools import change_account_from_assoc, str_to_date
+from expenses.utils.tools import str_to_date
 
 
 def _fail(upload: Upload, error: str):
@@ -33,6 +33,7 @@ def process_upload_result(upload: Upload):
         return
 
     defaults = _get_defaults()
+    associations = list(AccountAsociation.objects.only("token", "account").select_related("account"))
     fails = []
     created = 0
 
@@ -66,6 +67,10 @@ def process_upload_result(upload: Upload):
             continue
 
         account = defaults["income_account"] if is_income else defaults["expense_account"]
+        for assoc in associations:
+            if assoc.token.lower() in description.lower():
+                account = assoc.account
+                break
 
         serializer = TransactionSerializer(
             data={
@@ -84,8 +89,6 @@ def process_upload_result(upload: Upload):
             created += 1
         else:
             fails.append({"row_number": row_number, "description": description, "reason": str(serializer.errors)})
-
-    change_account_from_assoc()
 
     _update_fields = []
     if fails:

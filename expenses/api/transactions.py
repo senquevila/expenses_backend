@@ -17,8 +17,8 @@ from expenses.serializers import (
 class TransactionViewSet(viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     filter_backends = [OrderingFilter]
-    ordering_fields = ["payment_date", "amount", "local_amount"]
-    ordering = ["-payment_date", "-local_amount"]
+    ordering_fields = ["payment_date", "amount", "local_amount", "created"]
+    ordering = ["-created"]
 
     def get_serializer_class(self):
         if self.action in ("list", "retrieve"):

@@ -7,7 +7,12 @@ from rest_framework.response import Response
 
 # models import
 from expenses.models import Upload
-from expenses.serializers import UploadSerializer, UploadStep1InputSerializer, UploadStep1Serializer, UploadStep2Serializer
+from expenses.serializers import (
+    UploadSerializer,
+    UploadStep1InputSerializer,
+    UploadStep1Serializer,
+    UploadStep2Serializer,
+)
 from expenses.services.uploads import process_upload_result
 
 
@@ -15,8 +20,8 @@ class UploadViewSet(viewsets.ModelViewSet):
     queryset = Upload.objects.all()
     serializer_class = UploadSerializer
     filter_backends = [OrderingFilter]
-    ordering_fields = ["end_date", "start_date"]
-    ordering = ["-end_date"]
+    ordering_fields = ["end_date", "start_date", "created"]
+    ordering = ["-created"]
 
     def get_serializer_class(self):
         if self.action == "post_upload_step1":
