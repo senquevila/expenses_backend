@@ -145,6 +145,20 @@ class UploadStep1Serializer(serializers.ModelSerializer):
         fields = ["id", "file"]
 
 
+class UploadStep1InputSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+        if not value.name.endswith(".csv"):
+            raise serializers.ValidationError("File must be a CSV.")
+        return value
+
+
+class UploadStep2Serializer(serializers.Serializer):
+    result = serializers.JSONField()
+    upload_type = serializers.ChoiceField(choices=Upload.UploadType.choices)
+
+
 class LoanReaderSerializer(CurrencyMixin, serializers.ModelSerializer):
     amount = serializers.SerializerMethodField()
     monthly_payment = serializers.SerializerMethodField()
