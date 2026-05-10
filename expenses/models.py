@@ -132,11 +132,32 @@ def upload_parameters_default():
 
 
 class Upload(CreationModificationDateMixin):
+    class UploadType(models.TextChoices):
+        CREDIT_CARD = "CREDIT_CARD", _("Tarjeta de crédito")
+        SAVINGS_ACCOUNT = "SAVINGS_ACCOUNT", _("Cuenta de ahorros")
+
+    class UploadStatus(models.TextChoices):
+        PENDING = "PENDING", _("Pendiente")
+        PROCESSING = "PROCESSING", _("En proceso")
+        DONE = "DONE", _("Hecho")
+        FAILED = "FAILED", _("Fallida")
+
     file = models.FileField(_("Archivo"), blank=True, null=True, upload_to=expense_upload_path)
     result = models.JSONField(_("Resultado"), blank=True, null=True)
     start_date = models.DateField(_("Fecha de inicio"), default=timezone.now, blank=True, null=True)
     end_date = models.DateField(_("Fecha de fin"), default=timezone.now, blank=True, null=True)
     fails = models.JSONField(_("Errores"), blank=True, null=True)
+    upload_type = models.CharField(
+        _("Tipo de subida"), max_length=50, choices=UploadType.choices, blank=True, null=True
+    )
+    upload_status = models.CharField(
+        _("Estado de la subida"),
+        max_length=20,
+        choices=UploadStatus.choices,
+        default=UploadStatus.PENDING,
+        blank=True,
+        null=True,
+    )
 
     class Meta:
         verbose_name = _("Subida de archivo")
