@@ -1,7 +1,6 @@
 import hashlib
 
 from django.conf import settings
-from django.db.models import Max, Min
 
 from expenses.models import Account, Currency, Period, Transaction, Upload
 from expenses.serializers import TransactionSerializer
@@ -43,6 +42,7 @@ def process_upload_result(upload: Upload):
 
         identifier = _make_identifier(row)
         if Transaction.objects.filter(identifier=identifier).exists():
+            fails.append({"row_number": row_number, "description": description, "reason": "Duplicate transaction"})
             continue
 
         try:
@@ -95,7 +95,7 @@ def process_upload_result(upload: Upload):
     upload.upload_status = Upload.UploadStatus.DONE
     _update_fields.append("upload_status")
     upload.save(update_fields=_update_fields)
-    _update_interval_dates(upload)
+    _update_interval_dates(upload, rows)
 
 
 def _detect_type_from_structure(row: dict) -> str | None:
@@ -167,12 +167,14 @@ def _parse_savings_account_row(
     return None, None, False
 
 
-def _update_interval_dates(upload: Upload):
-    date_range = Transaction.objects.filter(upload=upload).aggregate(
-        min_date=Min("payment_date"),
-        max_date=Max("payment_date"),
-    )
-    if date_range["min_date"] and date_range["max_date"]:
-        upload.start_date = date_range["min_date"]
-        upload.end_date = date_range["max_date"]
+def _update_interval_dates(upload: Upload, rows: list[dict]):
+    dates = []
+    for row in rows:
+        try:
+            dates.append(str_to_date(row.get("date", "")))
+        except ValueError:
+            pass
+    if dates:
+        upload.start_date = min(dates)
+        upload.end_date = max(dates)
         upload.save(update_fields=["start_date", "end_date"])
