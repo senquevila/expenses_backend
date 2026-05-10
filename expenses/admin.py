@@ -4,7 +4,7 @@ from django.utils import timezone
 
 from expenses.models import (
     Account,
-    AccountAsociation,
+    AccountAssociation,
     Currency,
     CurrencyConvert,
     Loan,
@@ -131,8 +131,8 @@ class TransactionAdmin(admin.ModelAdmin):
     account_name.short_description = "Account Name"
 
 
-@admin.register(AccountAsociation)
-class AccountAsociationAdmin(admin.ModelAdmin):
+@admin.register(AccountAssociation)
+class AccountAssociationAdmin(admin.ModelAdmin):
     search_fields = (
         "account__name__icontains",
         "token__icontains",

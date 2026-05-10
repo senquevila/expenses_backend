@@ -2,7 +2,7 @@ import hashlib
 
 from django.conf import settings
 
-from expenses.models import Account, AccountAsociation, Currency, Period, Transaction, Upload
+from expenses.models import Account, AccountAssociation, Currency, Period, Transaction, Upload
 from expenses.serializers import TransactionSerializer
 from expenses.utils.tools import str_to_date
 
@@ -33,7 +33,7 @@ def process_upload_result(upload: Upload):
         return
 
     defaults = _get_defaults()
-    associations = list(AccountAsociation.objects.only("token", "account").select_related("account"))
+    associations = list(AccountAssociation.objects.only("token", "account").select_related("account"))
     fails = []
     created = 0
 

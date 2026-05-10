@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from expenses.models import (
     Account,
-    AccountAsociation,
+    AccountAssociation,
     Currency,
     CurrencyConvert,
     Loan,
@@ -49,7 +49,7 @@ AccountSerializer = AccountWriteSerializer
 
 class AccountAssociationSerializer(serializers.ModelSerializer):
     class Meta:
-        model = AccountAsociation
+        model = AccountAssociation
         fields = "__all__"
         ordering = ["account__name"]
 

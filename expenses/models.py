@@ -223,7 +223,7 @@ class ProgramTransaction(models.Model):
         return f"{self.name}"
 
 
-class AccountAsociation(models.Model):
+class AccountAssociation(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     token = models.CharField(_("Token para asociar"), max_length=100)
 

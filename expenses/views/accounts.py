@@ -4,7 +4,7 @@ from django.views.generic import ListView
 from django.views.generic.edit import FormView
 
 from expenses.forms import AccountTransferForm
-from expenses.models import Account, AccountAsociation, Transaction
+from expenses.models import Account, AccountAssociation, Transaction
 
 
 class AccountListView(ListView):
@@ -28,7 +28,7 @@ class AccountTransferView(FormView):
         # change expenses from account_origin to account_destination
         Transaction.objects.filter(account=account_origin).update(account=account_destination)
 
-        AccountAsociation.objects.filter(account=account_origin).update(account=account_destination)
+        AccountAssociation.objects.filter(account=account_origin).update(account=account_destination)
 
         account_origin.delete()
 

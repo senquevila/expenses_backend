@@ -8,7 +8,7 @@ from django.db.models import F, Sum
 from django.db.models.functions import Abs
 from rest_framework import status
 
-from expenses.models import AccountAsociation, Currency, CurrencyConvert, Transaction
+from expenses.models import AccountAssociation, Currency, CurrencyConvert, Transaction
 
 DOLAR_CODE = "USD"
 
@@ -50,8 +50,8 @@ def change_account_from_assoc() -> list[dict]:
     """
     data = []
 
-    # Retrieve only the necessary fields from AccountAsociation
-    associations = AccountAsociation.objects.only("token", "account")
+    # Retrieve only the necessary fields from AccountAssociation
+    associations = AccountAssociation.objects.only("token", "account")
 
     for association in associations:
         transactions = Transaction.objects.filter(
