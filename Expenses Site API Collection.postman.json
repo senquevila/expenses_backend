@@ -1957,7 +1957,7 @@
                                     }
                                 ],
                                 "url": {
-                                    "raw": "{{baseUrl}}/api/expenses/transactions/",
+                                    "raw": "{{baseUrl}}/api/expenses/transactions/?year={{year}}&month={{month}}&upload={{upload_id}}",
                                     "path": [
                                         "api",
                                         "expenses",
@@ -1966,7 +1966,23 @@
                                     "host": [
                                         "{{baseUrl}}"
                                     ],
-                                    "query": [],
+                                    "query": [
+                                        {
+                                            "key": "year",
+                                            "value": "{{year}}",
+                                            "description": "Filter by year (e.g. 2025)"
+                                        },
+                                        {
+                                            "key": "month",
+                                            "value": "{{month}}",
+                                            "description": "Filter by month (1-12)"
+                                        },
+                                        {
+                                            "key": "upload",
+                                            "value": "{{upload_id}}",
+                                            "description": "Filter by upload ID"
+                                        }
+                                    ],
                                     "variable": []
                                 }
                             },
@@ -2378,6 +2394,37 @@
                                     "cookie": []
                                 }
                             ],
+                            "protocolProfileBehavior": {
+                                "strictSSL": false,
+                                "followRedirects": true
+                            }
+                        },
+                        {
+                            "name": "Remove Invalid Transactions",
+                            "description": "Delete all transactions linked to the invalid account",
+                            "event": [],
+                            "auth": {},
+                            "request": {
+                                "auth": {},
+                                "method": "DELETE",
+                                "body": {},
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/expenses/transactions/remove_invalid_expenses/",
+                                    "path": [
+                                        "api",
+                                        "expenses",
+                                        "transactions",
+                                        "remove_invalid_expenses"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                }
+                            },
+                            "response": [],
                             "protocolProfileBehavior": {
                                 "strictSSL": false,
                                 "followRedirects": true
@@ -5957,6 +6004,123 @@
                                     "cookie": []
                                 }
                             ],
+                            "protocolProfileBehavior": {
+                                "strictSSL": false,
+                                "followRedirects": true
+                            }
+                        },
+                        {
+                            "name": "Upload Step 1 - Upload File",
+                            "description": "Upload a CSV file; returns upload ID and file info",
+                            "event": [],
+                            "auth": {},
+                            "request": {
+                                "auth": {},
+                                "method": "POST",
+                                "body": {
+                                    "mode": "formdata",
+                                    "formdata": [
+                                        {
+                                            "key": "file",
+                                            "type": "file",
+                                            "src": "",
+                                            "description": "CSV file to upload"
+                                        }
+                                    ]
+                                },
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/expenses/uploads/step1/",
+                                    "path": [
+                                        "api",
+                                        "expenses",
+                                        "uploads",
+                                        "step1"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {
+                                "strictSSL": false,
+                                "followRedirects": true
+                            }
+                        },
+                        {
+                            "name": "Upload Step 2 - Set Result & Type",
+                            "description": "Submit mapped result rows and upload_type for a previously uploaded file",
+                            "event": [],
+                            "auth": {},
+                            "request": {
+                                "auth": {},
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"result\": [],\n  \"upload_type\": \"credit_card\"\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/expenses/uploads/{{upload_id}}/step2/",
+                                    "path": [
+                                        "api",
+                                        "expenses",
+                                        "uploads",
+                                        "{{upload_id}}",
+                                        "step2"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                }
+                            },
+                            "response": [],
+                            "protocolProfileBehavior": {
+                                "strictSSL": false,
+                                "followRedirects": true
+                            }
+                        },
+                        {
+                            "name": "Remove Unused Uploads",
+                            "description": "Delete all uploads with no associated transactions",
+                            "event": [],
+                            "auth": {},
+                            "request": {
+                                "auth": {},
+                                "method": "DELETE",
+                                "body": {},
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/api/expenses/uploads/remove_unused_uploads/",
+                                    "path": [
+                                        "api",
+                                        "expenses",
+                                        "uploads",
+                                        "remove_unused_uploads"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                }
+                            },
+                            "response": [],
                             "protocolProfileBehavior": {
                                 "strictSSL": false,
                                 "followRedirects": true

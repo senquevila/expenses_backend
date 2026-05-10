@@ -7,7 +7,8 @@ from rest_framework.response import Response
 
 # models import
 from expenses.models import Upload
-from expenses.serializers import UploadSerializer, UploadStep1Serializer
+from expenses.serializers import UploadSerializer, UploadStep1InputSerializer, UploadStep1Serializer, UploadStep2Serializer
+from expenses.services.uploads import process_upload_result
 
 
 class UploadViewSet(viewsets.ModelViewSet):
@@ -31,27 +32,28 @@ class UploadViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["post"], url_path="step1")
     def post_upload_step1(self, request, *args, **kwargs):
         """
-        This is the first step of the upload process. It receives the file and returns the file name and the number of rows in the file.
+        This is the first step of the upload process. It receives the file and returns the file name and the number of
+        rows in the file.
         """
-        file = request.FILES.get("file")
-        if not file:
-            return Response(data={"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if not file.name.endswith(".csv"):
-            return Response(data={"error": "File must be a CSV"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Create a new upload instance
-        upload = Upload.objects.create(file=file)
-        serializer = self.get_serializer(upload)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        input_serializer = UploadStep1InputSerializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        upload = Upload.objects.create(file=input_serializer.validated_data["file"])
+        output_serializer = self.get_serializer(upload)
+        return Response(output_serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path="step2")
     def post_upload_step2(self, request, pk=None, *args, **kwargs):
         """
-        This is the second step of the upload process. It retrieves the Upload instance by ID, marks its result as 'processed', and returns the updated upload data.
+        This is the second step of the upload process. It retrieves the Upload instance by ID, updates its result with
+        the provided payload, and returns the updated upload data.
         """
         upload = self.get_object()
-        upload.result = "processed"
-        upload.save(update_fields=["result"])
-        serializer = self.get_serializer(upload)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        input_serializer = UploadStep2Serializer(data=request.data)
+        input_serializer.is_valid(raise_exception=True)
+        upload.result = input_serializer.validated_data["result"]
+        upload.upload_type = input_serializer.validated_data["upload_type"]
+        upload.upload_status = Upload.UploadStatus.PROCESSING
+        upload.save(update_fields=["result", "upload_type", "upload_status"])
+        process_upload_result(upload)
+        output_serializer = self.get_serializer(upload)
+        return Response(output_serializer.data, status=status.HTTP_200_OK)
