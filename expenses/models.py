@@ -114,6 +114,23 @@ def expense_upload_path(instance, filename):
     return f"expenses/{now.strftime('%Y/%m')}/{filename}"
 
 
+def upload_dimension_default():
+    return {
+        "rows": 0,
+        "cols": 0,
+    }
+
+
+def upload_parameters_default():
+    return {
+        "rows": {
+            "start": 0,
+            "end": 0,
+        },
+        "cols": [],
+    }
+
+
 class Upload(CreationModificationDateMixin):
     file = models.FileField(_("Archivo"), blank=True, null=True, upload_to=expense_upload_path)
     result = models.JSONField(_("Resultado"), blank=True, null=True)
