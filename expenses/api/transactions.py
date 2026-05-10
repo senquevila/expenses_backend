@@ -58,4 +58,3 @@ class TransactionViewSet(viewsets.ModelViewSet):
         invalid_expenses = Transaction.objects.filter(account__name=settings.INVALID_ACCOUNT)
         deletes, _ = invalid_expenses.delete()
         return Response(data={"transaction-removed": deletes}, status=status.HTTP_200_OK)
-

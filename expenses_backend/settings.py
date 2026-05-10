@@ -143,7 +143,12 @@ SCRAPING_TOKEN_SPLIT = os.environ.get("SCRAPING_TOKEN_SPLIT", "")
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:8000", "http://127.0.0.1:3000", "http://localhost:3000", "http://localhost:4200"]
+CORS_ALLOWED_ORIGINS = [
+    "http://127.0.0.1:8000",
+    "http://127.0.0.1:3000",
+    "http://localhost:3000",
+    "http://localhost:4200",
+]
 
 # Default Values
 DATE_FORMAT = "Y-m-d"

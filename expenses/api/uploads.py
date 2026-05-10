@@ -44,7 +44,7 @@ class UploadViewSet(viewsets.ModelViewSet):
         upload = Upload.objects.create(file=file)
         serializer = self.get_serializer(upload)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     @action(detail=True, methods=["post"], url_path="step2")
     def post_upload_step2(self, request, pk=None, *args, **kwargs):
         """

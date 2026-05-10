@@ -110,7 +110,18 @@ class TransactionWriteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Transaction
-        fields = ["id", "period", "account", "currency", "amount", "local_amount", "description", "payment_date", "identifier", "upload"]
+        fields = [
+            "id",
+            "period",
+            "account",
+            "currency",
+            "amount",
+            "local_amount",
+            "description",
+            "payment_date",
+            "identifier",
+            "upload",
+        ]
 
     def validate_period(self, period):
         if period.closed:
@@ -148,7 +159,7 @@ class LoanReaderSerializer(CurrencyMixin, serializers.ModelSerializer):
 
     def get_percentage(self, obj):
         return obj.percentage
-    
+
     def get_end_date(self, obj):
         return obj.end_date.isoformat() if obj.end_date else None
 

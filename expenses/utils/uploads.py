@@ -351,11 +351,7 @@ def get_transaction_money_account(row, indexes, currency, default_currency):
         ]
 
     # Tag each amount with its source index (0=debit, 1=credit), apply abs
-    tagged = [
-        (abs(amount), currency, idx)
-        for idx, (amount, currency) in enumerate(amounts)
-        if amount is not None
-    ]
+    tagged = [(abs(amount), currency, idx) for idx, (amount, currency) in enumerate(amounts) if amount is not None]
 
     if tagged:
         best = max(tagged, key=lambda x: x[0])
