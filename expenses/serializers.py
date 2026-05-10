@@ -128,6 +128,12 @@ class UploadSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class UploadStep1Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = Upload
+        fields = ["id", "file"]
+
+
 class LoanReaderSerializer(CurrencyMixin, serializers.ModelSerializer):
     amount = serializers.SerializerMethodField()
     monthly_payment = serializers.SerializerMethodField()
