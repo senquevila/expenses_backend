@@ -1,10 +1,13 @@
 # django imports
+from django.conf import settings
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 # models import
-from expenses.models import Period
+from expenses.models import Period, Transaction
 from expenses.serializers import (
     PeriodSerializer,
 )
@@ -14,6 +17,41 @@ from expenses.services.periods import calculate_period_total
 class PeriodViewSet(viewsets.ModelViewSet):
     queryset = Period.objects.filter(active=True).order_by("-year", "-month")
     serializer_class = PeriodSerializer
+
+    @action(detail=True, methods=["get"], url_path="summary")
+    def summary(self, request, pk=None):
+        """
+        Returns transaction totals grouped by account for the specified period.
+
+        URL: GET /periods/{id}/summary/
+
+        Response (200):
+            [
+                {
+                    "account_id": int,
+                    "account_name": str,
+                    "total": {"value": Decimal, "currency": str}
+                },
+                ...
+            ]
+        """
+        period = self.get_object()
+        rows = (
+            Transaction.objects.filter(period=period)
+            .values("account_id", "account__name")
+            .annotate(total=Coalesce(Sum("local_amount"), 0))
+            .order_by("account__name")
+        )
+        currency = settings.DEFAULT_CURRENCY
+        data = [
+            {
+                "account_id": row["account_id"],
+                "account_name": row["account__name"],
+                "total": {"value": row["total"], "currency": currency},
+            }
+            for row in rows
+        ]
+        return Response(data, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=["post"], url_path="toggle")
     def toggle(self, request, pk=None):
