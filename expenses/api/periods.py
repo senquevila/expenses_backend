@@ -22,4 +22,7 @@ class PeriodViewSet(viewsets.ModelViewSet):
         period.save(update_fields=["closed"])
         if period.closed:
             calculate_period_total(period)
+        else:
+            period.total = 0
+            period.save(update_fields=["total"])
         return Response({"status": "success", "closed": period.closed, "total": period.total}, status=status.HTTP_200_OK)
