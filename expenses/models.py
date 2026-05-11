@@ -167,7 +167,14 @@ class Upload(CreationModificationDateMixin):
         return str(self.file.name)
 
 
+class TransactionQuerySet(models.QuerySet):
+    def valid(self):
+        return self.exclude(account__name=settings.INVALID_ACCOUNT)
+
+
 class Transaction(Accountable):
+    objects = TransactionQuerySet.as_manager()
+
     description = models.CharField(_("Descripción"), max_length=255, blank=True, null=True)
     payment_date = models.DateField(_("Fecha de pago"), default=timezone.now, blank=True, null=True)
     local_amount = models.DecimalField(_("Monto local"), max_digits=13, decimal_places=2, default=0, editable=False)

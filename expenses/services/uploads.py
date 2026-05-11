@@ -157,9 +157,7 @@ def _parse_credit_card_row(row: dict, default_currency: Currency) -> tuple[float
     return amount, currency, is_income
 
 
-def _parse_savings_account_row(
-    row: dict, default_currency: Currency
-) -> tuple[float | None, Currency | None, bool]:
+def _parse_savings_account_row(row: dict, default_currency: Currency) -> tuple[float | None, Currency | None, bool]:
     """Credit = income, debit = expense. Credit takes precedence if both present."""
     credit_amount, credit_currency = _parse_amount_field(row.get("credit", {}), default_currency)
     if credit_amount:

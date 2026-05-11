@@ -40,9 +40,14 @@ class PeriodViewSet(viewsets.ModelViewSet):
         period = self.get_object()
         rows = (
             Transaction.objects.filter(period=period)
+            .valid()
             .values("account_id", "account__name")
-            .annotate(total=Coalesce(Sum("local_amount"), Decimal(0), output_field=DecimalField(max_digits=14, decimal_places=2)))
-            .order_by("account__name")
+            .annotate(
+                total=Coalesce(
+                    Sum("local_amount"), Decimal(0), output_field=DecimalField(max_digits=14, decimal_places=2)
+                )
+            )
+            .order_by("-total")
         )
         currency = settings.DEFAULT_CURRENCY
         data = [
@@ -65,4 +70,6 @@ class PeriodViewSet(viewsets.ModelViewSet):
         else:
             period.total = 0
             period.save(update_fields=["total"])
-        return Response({"status": "success", "closed": period.closed, "total": period.total}, status=status.HTTP_200_OK)
+        return Response(
+            {"status": "success", "closed": period.closed, "total": period.total}, status=status.HTTP_200_OK
+        )

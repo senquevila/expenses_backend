@@ -26,7 +26,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
         return TransactionWriteSerializer
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = super().get_queryset().valid()
         year = self.request.query_params.get("year")
         month = self.request.query_params.get("month")
         upload = self.request.query_params.get("upload")
