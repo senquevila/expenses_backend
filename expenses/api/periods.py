@@ -8,6 +8,7 @@ from expenses.models import Period
 from expenses.serializers import (
     PeriodSerializer,
 )
+from expenses.services.periods import calculate_period_total
 
 
 class PeriodViewSet(viewsets.ModelViewSet):
@@ -19,4 +20,6 @@ class PeriodViewSet(viewsets.ModelViewSet):
         period = self.get_object()
         period.closed = not period.closed
         period.save(update_fields=["closed"])
-        return Response({"status": "success", "closed": period.closed}, status=status.HTTP_200_OK)
+        if period.closed:
+            calculate_period_total(period)
+        return Response({"status": "success", "closed": period.closed, "total": period.total}, status=status.HTTP_200_OK)
