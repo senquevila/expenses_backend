@@ -30,6 +30,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
         year = self.request.query_params.get("year")
         month = self.request.query_params.get("month")
         upload = self.request.query_params.get("upload")
+        account = self.request.query_params.get("account")
+        period = self.request.query_params.get("period")
 
         if year is not None:
             try:
@@ -48,6 +50,18 @@ class TransactionViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(upload_id=int(upload))
             except (TypeError, ValueError):
                 raise ValidationError({"upload": "Must be a valid integer."})
+
+        if period is not None:
+            try:
+                queryset = queryset.filter(period_id=int(period))
+            except (TypeError, ValueError):
+                raise ValidationError({"period": "Must be a valid integer."})
+
+        if account is not None:
+            try:
+                queryset = queryset.filter(account_id=int(account))
+            except (TypeError, ValueError):
+                raise ValidationError({"account": "Must be a valid integer."})
 
         return queryset
 

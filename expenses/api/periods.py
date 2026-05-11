@@ -1,6 +1,8 @@
 # django imports
+from decimal import Decimal
+
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import DecimalField, Sum
 from django.db.models.functions import Coalesce
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -39,7 +41,7 @@ class PeriodViewSet(viewsets.ModelViewSet):
         rows = (
             Transaction.objects.filter(period=period)
             .values("account_id", "account__name")
-            .annotate(total=Coalesce(Sum("local_amount"), 0))
+            .annotate(total=Coalesce(Sum("local_amount"), Decimal(0), output_field=DecimalField(max_digits=14, decimal_places=2)))
             .order_by("account__name")
         )
         currency = settings.DEFAULT_CURRENCY

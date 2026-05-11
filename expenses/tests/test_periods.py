@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
@@ -69,7 +70,7 @@ class TestPeriodToggleEndpoint(TestCase):
         self._make_transaction(Decimal("50.00"))
         response = self.client.post(self._toggle_url())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["total"], 150)
+        self.assertEqual(response.json()["total"], 150.00)
 
     def test_closing_period_response_structure(self):
         response = self.client.post(self._toggle_url())
@@ -103,3 +104,71 @@ class TestPeriodToggleEndpoint(TestCase):
         self.client.post(self._toggle_url())
         self.period.refresh_from_db()
         self.assertEqual(self.period.total, Decimal("0"))
+
+
+class TestPeriodSummaryEndpoint(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.currency = Currency.objects.create(alpha3="HNL", name="Lempira")
+        cls.food = Account.objects.create(name="Food", sign=Account.HABER)
+        cls.transport = Account.objects.create(name="Transport", sign=Account.HABER)
+
+    def setUp(self):
+        self.period = Period.objects.create(month=3, year=2026, closed=False)
+
+    def _summary_url(self):
+        return reverse("api-periods-summary", kwargs={"pk": self.period.pk})
+
+    def _make_transaction(self, account, amount):
+        return Transaction.objects.create(
+            period=self.period,
+            account=account,
+            currency=self.currency,
+            amount=amount,
+        )
+
+    def test_returns_200(self):
+        response = self.client.get(self._summary_url())
+        self.assertEqual(response.status_code, 200)
+
+    def test_empty_period_returns_empty_list(self):
+        response = self.client.get(self._summary_url())
+        self.assertEqual(response.json(), [])
+
+    def test_sums_transactions_by_account(self):
+        self._make_transaction(self.food, Decimal("100.00"))
+        self._make_transaction(self.food, Decimal("50.00"))
+        self._make_transaction(self.transport, Decimal("30.00"))
+        response = self.client.get(self._summary_url())
+        data = {row["account_id"]: row for row in response.json()}
+        self.assertEqual(Decimal(data[self.food.pk]["total"]["value"]), Decimal("150.00"))
+        self.assertEqual(Decimal(data[self.transport.pk]["total"]["value"]), Decimal("30.00"))
+
+    def test_response_includes_expected_fields(self):
+        self._make_transaction(self.food, Decimal("100.00"))
+        response = self.client.get(self._summary_url())
+        row = response.json()[0]
+        self.assertIn("account_id", row)
+        self.assertIn("account_name", row)
+        self.assertIn("total", row)
+        self.assertIn("value", row["total"])
+        self.assertIn("currency", row["total"])
+
+    def test_total_currency_is_default(self):
+        self._make_transaction(self.food, Decimal("100.00"))
+        response = self.client.get(self._summary_url())
+        self.assertEqual(response.json()[0]["total"]["currency"], settings.DEFAULT_CURRENCY)
+
+    def test_results_ordered_by_account_name(self):
+        self._make_transaction(self.transport, Decimal("10.00"))
+        self._make_transaction(self.food, Decimal("20.00"))
+        response = self.client.get(self._summary_url())
+        names = [row["account_name"] for row in response.json()]
+        self.assertEqual(names, sorted(names))
+
+    def test_only_includes_accounts_with_transactions(self):
+        self._make_transaction(self.food, Decimal("100.00"))
+        response = self.client.get(self._summary_url())
+        account_ids = [row["account_id"] for row in response.json()]
+        self.assertIn(self.food.pk, account_ids)
+        self.assertNotIn(self.transport.pk, account_ids)
