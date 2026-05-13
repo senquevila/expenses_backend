@@ -1,4 +1,5 @@
 import hashlib
+import re
 
 from django.conf import settings
 
@@ -139,7 +140,7 @@ def _parse_amount_field(field: dict, default_currency: Currency) -> tuple[float 
     if not raw:
         return None, None
     try:
-        amount = float(str(raw).replace(",", ""))
+        amount = float(re.sub(r"[^\d.-]", "", str(raw).replace(",", "")))
     except (ValueError, AttributeError):
         return None, None
     if not amount:

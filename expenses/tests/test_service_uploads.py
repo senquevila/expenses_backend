@@ -181,6 +181,26 @@ class TestParseAmountField(BaseServiceTestCase):
         amount, currency = _parse_amount_field({"amount": "-75.50", "currency": ""}, self.hnl)
         self.assertEqual(amount, -75.5)
 
+    def test_amount_with_currency_prefix_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "L17.23", "currency": "HNL"}, self.hnl)
+        self.assertEqual(amount, 17.23)
+
+    def test_amount_with_currency_prefix_and_commas_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "L10,342.64", "currency": "HNL"}, self.hnl)
+        self.assertEqual(amount, 10342.64)
+
+    def test_amount_with_dollar_prefix_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "$9,853.61", "currency": "USD"}, self.usd)
+        self.assertEqual(amount, 9853.61)
+
+    def test_amount_with_currency_suffix_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "17.23L", "currency": "HNL"}, self.hnl)
+        self.assertEqual(amount, 17.23)
+
+    def test_amount_with_suffix_and_commas_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "10,342.64HNL", "currency": "HNL"}, self.hnl)
+        self.assertEqual(amount, 10342.64)
+
 
 # ===========================================================================
 # _parse_credit_card_row
@@ -533,6 +553,30 @@ class TestProcessUploadResult(BaseServiceTestCase):
 
         t = Transaction.objects.first()
         self.assertEqual(t.account, self.expense_account)
+
+    # --- Currency symbol in amount ---
+
+    def test_savings_account_debit_with_currency_prefix_creates_transaction(self):
+        rows = [sa_row(1, "2024-01-15", "Préstamo", debit_amount="L10,342.64")]
+        upload = self._make_sa_upload(rows)
+
+        process_upload_result(upload)
+
+        self.assertEqual(Transaction.objects.count(), 1)
+        t = Transaction.objects.first()
+        self.assertEqual(float(t.amount), 10342.64)
+        self.assertEqual(t.account, self.expense_account)
+
+    def test_savings_account_credit_with_currency_prefix_creates_transaction(self):
+        rows = [sa_row(1, "2024-01-15", "Intereses", credit_amount="L17.23")]
+        upload = self._make_sa_upload(rows)
+
+        process_upload_result(upload)
+
+        self.assertEqual(Transaction.objects.count(), 1)
+        t = Transaction.objects.first()
+        self.assertEqual(float(t.amount), 17.23)
+        self.assertEqual(t.account, self.income_account)
 
     # --- Upload linked to transaction ---
 
