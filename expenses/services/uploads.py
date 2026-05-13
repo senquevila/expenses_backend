@@ -139,8 +139,20 @@ def _parse_amount_field(field: dict, default_currency: Currency) -> tuple[float 
     raw = field.get("amount", "")
     if not raw:
         return None, None
+
+    cleaned = str(raw).strip()
+    # Remove internal whitespace and optional currency tokens around the numeric value.
+    cleaned = re.sub(r"\s+", "", cleaned)
+    cleaned = re.sub(r"^[A-Za-z$€£¥₡]+", "", cleaned)
+    cleaned = re.sub(r"[A-Za-z$€£¥₡]+$", "", cleaned)
+    # Remove thousand separators before validating decimal format.
+    cleaned = cleaned.replace(",", "")
+
+    if not re.fullmatch(r"-?\d+(?:\.\d+)?", cleaned):
+        return None, None
+
     try:
-        amount = float(re.sub(r"[^\d.-]", "", str(raw).replace(",", "")))
+        amount = float(cleaned)
     except (ValueError, AttributeError):
         return None, None
     if not amount:

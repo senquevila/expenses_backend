@@ -166,6 +166,7 @@ class TestParseAmountField(BaseServiceTestCase):
     def test_amount_with_commas_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "1,500.00", "currency": ""}, self.hnl)
         self.assertEqual(amount, 1500.0)
+        self.assertEqual(currency, self.hnl)
 
     def test_zero_amount_returns_none(self):
         amount, currency = _parse_amount_field({"amount": "0.00", "currency": "HNL"}, self.hnl)
@@ -180,26 +181,77 @@ class TestParseAmountField(BaseServiceTestCase):
     def test_negative_amount_is_preserved(self):
         amount, currency = _parse_amount_field({"amount": "-75.50", "currency": ""}, self.hnl)
         self.assertEqual(amount, -75.5)
+        self.assertEqual(currency, self.hnl)
 
     def test_amount_with_currency_prefix_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "L17.23", "currency": "HNL"}, self.hnl)
         self.assertEqual(amount, 17.23)
+        self.assertEqual(currency, self.hnl)
 
     def test_amount_with_currency_prefix_and_commas_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "L10,342.64", "currency": "HNL"}, self.hnl)
         self.assertEqual(amount, 10342.64)
+        self.assertEqual(currency, self.hnl)
 
     def test_amount_with_dollar_prefix_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "$9,853.61", "currency": "USD"}, self.usd)
         self.assertEqual(amount, 9853.61)
+        self.assertEqual(currency, self.usd)
 
     def test_amount_with_currency_suffix_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "17.23L", "currency": "HNL"}, self.hnl)
         self.assertEqual(amount, 17.23)
+        self.assertEqual(currency, self.hnl)
 
     def test_amount_with_suffix_and_commas_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "10,342.64HNL", "currency": "HNL"}, self.hnl)
         self.assertEqual(amount, 10342.64)
+        self.assertEqual(currency, self.hnl)
+
+    def test_amount_with_multiple_decimal_points_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "1.2.3", "currency": "HNL"}, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_amount_with_multiple_minus_signs_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "1-2-3", "currency": "HNL"}, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_amount_with_misplaced_minus_sign_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "12-3.45", "currency": "HNL"}, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_negative_amount_with_dollar_symbol_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "-$50.00", "currency": "USD"}, self.usd)
+        self.assertEqual(amount, -50.0)
+        self.assertEqual(currency, self.usd)
+
+    def test_negative_amount_with_currency_prefix_before_minus_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "L-50.00", "currency": "HNL"}, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_amount_with_currency_prefix_and_space_is_parsed(self):
+        amount, currency = _parse_amount_field({"amount": "$ 50.00", "currency": "USD"}, self.usd)
+        self.assertEqual(amount, 50.0)
+        self.assertEqual(currency, self.usd)
+
+    def test_amount_with_currency_prefix_and_suffix_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "$50.00USD", "currency": "USD"}, self.usd)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_amount_with_multiple_currency_symbols_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "$$50.00", "currency": "USD"}, self.usd)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
+
+    def test_european_number_format_is_invalid(self):
+        amount, currency = _parse_amount_field({"amount": "1.342,64", "currency": "HNL"}, self.hnl)
+        self.assertIsNone(amount)
+        self.assertIsNone(currency)
 
 
 # ===========================================================================
