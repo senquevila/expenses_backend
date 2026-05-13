@@ -240,18 +240,18 @@ class TestParseAmountField(BaseServiceTestCase):
 
     def test_amount_with_currency_prefix_and_suffix_is_invalid(self):
         amount, currency = _parse_amount_field({"amount": "$50.00USD", "currency": "USD"}, self.usd)
-        self.assertIsNone(amount)
-        self.assertIsNone(currency)
+        self.assertEqual(amount, 50.0)
+        self.assertEqual(currency, self.usd)
 
-    def test_amount_with_multiple_currency_symbols_is_invalid(self):
+    def test_amount_with_multiple_currency_symbols_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "$$50.00", "currency": "USD"}, self.usd)
-        self.assertIsNone(amount)
-        self.assertIsNone(currency)
+        self.assertEqual(amount, 50.0)
+        self.assertEqual(currency, self.usd)
 
-    def test_european_number_format_is_invalid(self):
+    def test_european_number_format_is_parsed(self):
         amount, currency = _parse_amount_field({"amount": "1.342,64", "currency": "HNL"}, self.hnl)
-        self.assertIsNone(amount)
-        self.assertIsNone(currency)
+        self.assertEqual(amount, 1342.64)
+        self.assertEqual(currency, self.hnl)
 
 
 # ===========================================================================

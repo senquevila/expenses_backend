@@ -141,18 +141,31 @@ def _parse_amount_field(field: dict, default_currency: Currency) -> tuple[float 
         return None, None
 
     cleaned = str(raw).strip()
-    # Remove internal whitespace and optional currency tokens around the numeric value.
+    # Remove internal whitespace.
     cleaned = re.sub(r"\s+", "", cleaned)
+    # Extract a leading minus before stripping currency symbols so that
+    # '-$50.00' is accepted but 'L-50.00' (symbol before minus) is rejected.
+    sign = ""
+    if cleaned.startswith("-"):
+        sign = "-"
+        cleaned = cleaned[1:]
+    # Remove optional currency tokens around the numeric value.
     cleaned = re.sub(r"^[A-Za-z$€£¥₡]+", "", cleaned)
     cleaned = re.sub(r"[A-Za-z$€£¥₡]+$", "", cleaned)
-    # Remove thousand separators before validating decimal format.
-    cleaned = cleaned.replace(",", "")
+    # Normalize thousand/decimal separators before validating.
+    # European format uses dot as thousands and comma as decimal (e.g. 1.342,64).
+    dot_pos = cleaned.rfind(".")
+    comma_pos = cleaned.rfind(",")
+    if dot_pos >= 0 and comma_pos > dot_pos:
+        cleaned = cleaned.replace(".", "").replace(",", ".")
+    else:
+        cleaned = cleaned.replace(",", "")
 
-    if not re.fullmatch(r"-?\d+(?:\.\d+)?", cleaned):
+    if not re.fullmatch(r"\d+(?:\.\d+)?", cleaned):
         return None, None
 
     try:
-        amount = float(cleaned)
+        amount = float(sign + cleaned)
     except (ValueError, AttributeError):
         return None, None
     if not amount:
