@@ -6,13 +6,13 @@ from expenses.models import Account, AccountAssociation, Currency, Period, Trans
 from expenses.services.uploads import (
     _detect_type_from_structure,
     _get_defaults,
-    _make_identifier,
     _parse_amount_field,
     _parse_credit_card_row,
     _parse_savings_account_row,
     _update_interval_dates,
     process_upload_result,
 )
+from expenses.utils.identifier import make_transaction_identifier
 
 
 def cc_row(row_number, date_str, description, local_amount="", local_currency="HNL", usd_amount="", usd_currency="USD"):
@@ -105,36 +105,40 @@ class TestGetDefaults(TestCase):
 
 
 # ===========================================================================
-# _make_identifier
+# make_transaction_identifier
 # ===========================================================================
 
 
-class TestMakeIdentifier(TestCase):
+class TestMakeTransactionIdentifier(TestCase):
     def test_returns_sha256_hex_string(self):
-        row = cc_row(1, "2024-01-15", "WALMART", local_amount="100.00")
-        result = _make_identifier(row)
+        result = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
         self.assertIsInstance(result, str)
         self.assertEqual(len(result), 64)
 
-    def test_same_row_gives_same_identifier(self):
-        row = cc_row(1, "2024-01-15", "WALMART", local_amount="100.00")
-        self.assertEqual(_make_identifier(row), _make_identifier(row))
+    def test_same_inputs_give_same_identifier(self):
+        a = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
+        b = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
+        self.assertEqual(a, b)
 
     def test_different_amounts_give_different_identifiers(self):
-        row1 = cc_row(1, "2024-01-15", "WALMART", local_amount="100.00")
-        row2 = cc_row(1, "2024-01-15", "WALMART", local_amount="200.00")
-        self.assertNotEqual(_make_identifier(row1), _make_identifier(row2))
-
-    def test_savings_account_row_identifier(self):
-        row = sa_row(1, "2024-01-15", "RENT", debit_amount="5000.00")
-        result = _make_identifier(row)
-        self.assertIsInstance(result, str)
-        self.assertEqual(len(result), 64)
+        a = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
+        b = make_transaction_identifier(date(2024, 1, 15), "WALMART", 200.0, "HNL")
+        self.assertNotEqual(a, b)
 
     def test_different_descriptions_give_different_identifiers(self):
-        row1 = cc_row(1, "2024-01-15", "WALMART", local_amount="100.00")
-        row2 = cc_row(1, "2024-01-15", "AMAZON", local_amount="100.00")
-        self.assertNotEqual(_make_identifier(row1), _make_identifier(row2))
+        a = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
+        b = make_transaction_identifier(date(2024, 1, 15), "AMAZON", 100.0, "HNL")
+        self.assertNotEqual(a, b)
+
+    def test_different_currencies_give_different_identifiers(self):
+        a = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "HNL")
+        b = make_transaction_identifier(date(2024, 1, 15), "WALMART", 100.0, "USD")
+        self.assertNotEqual(a, b)
+
+    def test_negative_amount_matches_positive(self):
+        a = make_transaction_identifier(date(2024, 1, 15), "REFUND", 50.0, "HNL")
+        b = make_transaction_identifier(date(2024, 1, 15), "REFUND", -50.0, "HNL")
+        self.assertEqual(a, b)
 
 
 # ===========================================================================

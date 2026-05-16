@@ -1,10 +1,10 @@
-import hashlib
 import re
 
 from django.conf import settings
 
 from expenses.models import Account, AccountAssociation, Currency, Period, Transaction, Upload
 from expenses.serializers import TransactionSerializer
+from expenses.utils.identifier import make_transaction_identifier
 from expenses.utils.tools import str_to_date
 
 
@@ -42,11 +42,6 @@ def process_upload_result(upload: Upload):
         row_number = row.get("row_number")
         description = row.get("description", "")
 
-        identifier = _make_identifier(row)
-        if Transaction.objects.filter(identifier=identifier).exists():
-            fails.append({"row_number": row_number, "description": description, "reason": "Duplicate transaction"})
-            continue
-
         try:
             payment_date = str_to_date(row.get("date", ""))
         except ValueError as e:
@@ -65,6 +60,11 @@ def process_upload_result(upload: Upload):
 
         if not amount:
             fails.append({"row_number": row_number, "description": description, "reason": "Amount is zero or invalid"})
+            continue
+
+        identifier = make_transaction_identifier(payment_date, description, amount, currency.alpha3)
+        if Transaction.objects.filter(identifier=identifier).exists():
+            fails.append({"row_number": row_number, "description": description, "reason": "Duplicate transaction"})
             continue
 
         account = defaults["income_account"] if is_income else defaults["expense_account"]
@@ -127,33 +127,19 @@ def _get_defaults() -> dict:
     }
 
 
-def _make_identifier(row: dict) -> str:
-    fields = [row.get("date", ""), row.get("description", "")]
-    for key in ("local", "usd", "debit", "credit"):
-        if key in row:
-            fields.append(str(row.get(key, {}).get("amount", "")))
-    return hashlib.sha256("".join(fields).encode()).hexdigest()
-
-
 def _parse_amount_field(field: dict, default_currency: Currency) -> tuple[float | None, Currency | None]:
     raw = field.get("amount", "")
     if not raw:
         return None, None
 
     cleaned = str(raw).strip()
-    # Remove internal whitespace.
     cleaned = re.sub(r"\s+", "", cleaned)
-    # Extract a leading minus before stripping currency symbols so that
-    # '-$50.00' is accepted but 'L-50.00' (symbol before minus) is rejected.
     sign = ""
     if cleaned.startswith("-"):
         sign = "-"
         cleaned = cleaned[1:]
-    # Remove optional currency tokens around the numeric value.
     cleaned = re.sub(r"^[A-Za-z$€£¥₡]+", "", cleaned)
     cleaned = re.sub(r"[A-Za-z$€£¥₡]+$", "", cleaned)
-    # Normalize thousand/decimal separators before validating.
-    # European format uses dot as thousands and comma as decimal (e.g. 1.342,64).
     dot_pos = cleaned.rfind(".")
     comma_pos = cleaned.rfind(",")
     if dot_pos >= 0 and comma_pos > dot_pos:

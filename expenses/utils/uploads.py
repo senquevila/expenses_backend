@@ -1,4 +1,3 @@
-import hashlib
 import json
 import re
 
@@ -7,6 +6,7 @@ from django.db.models import Max, Min
 
 from expenses.models import Account, Currency, Period, Transaction, Upload
 from expenses.serializers import TransactionSerializer
+from expenses.utils.identifier import make_transaction_identifier
 from expenses.utils.tools import change_account_from_assoc, str_to_date
 
 DATE_FIELD = 0
@@ -45,15 +45,6 @@ def process_credit_card_csv(upload: Upload):
             "source": row,
         }
 
-        # create identifier
-        row_hash = hashlib.sha256("".join(row[1:]).encode()).hexdigest()
-
-        # check if the transaction already exists
-        if Transaction.objects.filter(identifier=row_hash).exists():
-            message["description"] = "Transaction already exists"
-            set_message(**message)
-            continue
-
         try:
             payment_date, period = get_payment_date_and_period(row, indexes)
             dates_set.add(payment_date)
@@ -84,6 +75,12 @@ def process_credit_card_csv(upload: Upload):
             continue
 
         description = row[indexes["description"]]
+        identifier = make_transaction_identifier(payment_date, description, amount, currency.alpha3)
+
+        if Transaction.objects.filter(identifier=identifier).exists():
+            message["description"] = "Transaction already exists"
+            set_message(**message)
+            continue
 
         # TODO: temporal
         if Transaction.objects.filter(
@@ -111,7 +108,7 @@ def process_credit_card_csv(upload: Upload):
                 "currency": currency.pk,
                 "amount": abs(amount),
                 "upload": upload.pk,
-                "identifier": row_hash,
+                "identifier": identifier,
             }
         )
         if serializer.is_valid():
@@ -161,15 +158,6 @@ def process_account_csv(upload: Upload, currency: Currency):
             "source": row,
         }
 
-        # create identifier
-        row_hash = hashlib.sha256("".join(row[1:]).encode()).hexdigest()
-
-        # check if the transaction already exists
-        if Transaction.objects.filter(identifier=row_hash).exists():
-            message["description"] = "Transaction already exists"
-            set_message(**message)
-            continue
-
         try:
             payment_date, period = get_payment_date_and_period(row, indexes)
         except ValueError as e:
@@ -199,6 +187,12 @@ def process_account_csv(upload: Upload, currency: Currency):
             continue
 
         description = row[indexes["description"]]
+        identifier = make_transaction_identifier(payment_date, description, amount, currency.alpha3)
+
+        if Transaction.objects.filter(identifier=identifier).exists():
+            message["description"] = "Transaction already exists"
+            set_message(**message)
+            continue
 
         # TODO: temporal
         if Transaction.objects.filter(
@@ -223,7 +217,7 @@ def process_account_csv(upload: Upload, currency: Currency):
                 "currency": currency.pk,
                 "amount": amount,
                 "upload": upload.pk,
-                "identifier": row_hash,
+                "identifier": identifier,
             }
         )
         if serializer.is_valid():
