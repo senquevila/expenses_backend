@@ -7,8 +7,10 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 # models import
-from expenses.models import Transaction
+from expenses.models import ProgramTransaction, Transaction
 from expenses.serializers import (
+    ProgramTransactionReadSerializer,
+    ProgramTransactionWriteSerializer,
     TransactionReadSerializer,
     TransactionWriteSerializer,
 )
@@ -83,3 +85,15 @@ class TransactionViewSet(viewsets.ModelViewSet):
         invalid_expenses = Transaction.objects.filter(account__name=settings.INVALID_ACCOUNT)
         deletes, _ = invalid_expenses.delete()
         return Response(data={"transaction-removed": deletes}, status=status.HTTP_200_OK)
+
+
+class ProgramTransactionViewSet(viewsets.ModelViewSet):
+    queryset = ProgramTransaction.objects.all()
+    filter_backends = [OrderingFilter]
+    ordering_fields = ["start_date", "end_date", "amount"]
+    ordering = ["-start_date"]
+
+    def get_serializer_class(self):
+        if self.action in ("list", "retrieve"):
+            return ProgramTransactionReadSerializer
+        return ProgramTransactionWriteSerializer

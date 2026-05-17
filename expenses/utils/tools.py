@@ -49,27 +49,28 @@ def change_account_from_assoc() -> list[dict]:
     and return a summary of changes.
     """
     data = []
-
-    # Retrieve only the necessary fields from AccountAssociation
-    associations = AccountAssociation.objects.only("token", "account")
+    associations = AccountAssociation.objects.select_related("account")
 
     for association in associations:
-        transactions = Transaction.objects.filter(
-            description__icontains=association.token, period__active=True
-        ).exclude(account=association.account)
+        transactions = list(
+            Transaction.objects.filter(description__icontains=association.token, period__active=True)
+            .exclude(account=association.account)
+            .select_related("account")
+        )
 
-        # Prepare summary data and update transactions
-        for transaction in transactions:
-            data.append(
-                {
-                    "id": transaction.id,
-                    "account_found": association.account.name,
-                    "account_original": transaction.account.name,
-                }
-            )
-            # Update the transaction's account
-            transaction.account = association.account
-            transaction.save(update_fields=["account"])
+        if not transactions:
+            continue
+
+        data.extend(
+            {
+                "id": t.id,
+                "account_found": association.account.name,
+                "account_original": t.account.name,
+            }
+            for t in transactions
+        )
+
+        Transaction.objects.filter(id__in=[t.id for t in transactions]).update(account=association.account)
 
     return data
 

@@ -8,6 +8,7 @@ from expenses.models import (
     CurrencyConvert,
     Loan,
     Period,
+    ProgramTransaction,
     Subscription,
     Transaction,
     Upload,
@@ -43,11 +44,37 @@ class AccountWriteSerializer(serializers.ModelSerializer):
         ordering = ["account_type", "name"]
 
 
+class AccountTransferSerializer(serializers.Serializer):
+    source_account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
+    target_account_id = serializers.PrimaryKeyRelatedField(queryset=Account.objects.all())
+
+    def validate(self, data):
+        if data["source_account_id"] == data["target_account_id"]:
+            raise serializers.ValidationError("source and target accounts must be different")
+        return data
+
+
 # Keep backward-compatible alias
 AccountSerializer = AccountWriteSerializer
 
 
 class AccountAssociationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AccountAssociation
+        fields = "__all__"
+        ordering = ["account__name"]
+
+
+class AccountAssociationReadSerializer(serializers.ModelSerializer):
+    account = AccountReadSerializer(read_only=True)
+
+    class Meta:
+        model = AccountAssociation
+        fields = "__all__"
+        ordering = ["account__name"]
+
+
+class AccountAssociationWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccountAssociation
         fields = "__all__"
@@ -207,3 +234,21 @@ class SubscriptionWriterSerializer(serializers.ModelSerializer):
 
 # Keep backward-compatible alias
 SubscriptionWriteSerializer = SubscriptionWriterSerializer
+
+
+class ProgramTransactionReadSerializer(CurrencyMixin, serializers.ModelSerializer):
+    account = AccountReadSerializer(read_only=True)
+    amount = serializers.SerializerMethodField()
+
+    def get_amount(self, obj):
+        return {"value": obj.amount, "currency": self.get_currency_code(obj)}
+
+    class Meta:
+        model = ProgramTransaction
+        fields = "__all__"
+
+
+class ProgramTransactionWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProgramTransaction
+        fields = "__all__"
