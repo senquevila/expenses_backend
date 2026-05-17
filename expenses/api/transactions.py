@@ -63,6 +63,10 @@ class TransactionViewSet(viewsets.ModelViewSet):
             except (TypeError, ValueError):
                 raise ValidationError({"account": "Must be a valid integer."})
 
+        description = self.request.query_params.get("description")
+        if description:
+            queryset = queryset.filter(description__icontains=description)
+
         return queryset
 
     def destroy(self, request, *args, **kwargs):
