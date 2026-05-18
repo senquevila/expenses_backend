@@ -1,7 +1,0 @@
-.color-bullet {
-    width: 10px;  /* Width of the square */
-    height: 10px; /* Height of the square */
-    background-color: #666; /* Default color, change as needed */
-    margin-left: 5px; /* Adds space between the label and the square */
-    vertical-align: middle; /* Aligns middle to the text in the label */
-}
